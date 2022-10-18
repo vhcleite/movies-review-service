@@ -1,6 +1,7 @@
 package com.reactivespring.moviesreviewservice.handler;
 
 import com.reactivespring.moviesreviewservice.domain.Review;
+import com.reactivespring.moviesreviewservice.exceptions.ReviewDataException;
 import com.reactivespring.moviesreviewservice.repository.MovieReviewRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -10,15 +11,34 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
+import java.util.stream.Collectors;
+
 @Component
 @AllArgsConstructor
 public class MovieReviewHandler {
     private final MovieReviewRepository repository;
 
+    private final Validator validator;
+
+
     public Mono<ServerResponse> addReview(ServerRequest request) {
         return request.bodyToMono(Review.class)
+                .doOnNext(this::validate)
                 .flatMap(repository::save)
                 .flatMap(ServerResponse.status(HttpStatus.CREATED)::bodyValue);
+    }
+
+    private void validate(Review review) {
+        var violations = validator.validate(review);
+        if (!violations.isEmpty()) {
+            var message = violations
+                    .stream()
+                    .map(ConstraintViolation::getMessage)
+                    .collect(Collectors.joining(", "));
+            throw new ReviewDataException(message);
+        }
     }
 
     public Mono<ServerResponse> getReviews(ServerRequest serverRequest) {
