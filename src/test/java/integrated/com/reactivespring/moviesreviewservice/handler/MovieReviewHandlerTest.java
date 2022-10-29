@@ -123,6 +123,21 @@ class MovieReviewHandlerTest {
     }
 
     @Test
+    void updateReview_notExists() {
+        //given
+        var review = new Review("100", 1L, "Awesome Movie", 10.0);
+        //when
+        webTestClient
+                .put()
+                .uri(REVIEWS_URL + "/100")
+                .bodyValue(review)
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody(String.class)
+                .isEqualTo("review not found 100");
+    }
+
+    @Test
     void deleteReview() {
         //when
         webTestClient

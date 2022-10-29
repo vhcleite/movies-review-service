@@ -2,6 +2,7 @@ package com.reactivespring.moviesreviewservice.handler;
 
 import com.reactivespring.moviesreviewservice.domain.Review;
 import com.reactivespring.moviesreviewservice.exceptions.ReviewDataException;
+import com.reactivespring.moviesreviewservice.exceptions.ReviewNotFoundException;
 import com.reactivespring.moviesreviewservice.repository.MovieReviewRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -57,6 +58,7 @@ public class MovieReviewHandler {
     public Mono<ServerResponse> updateReview(ServerRequest serverRequest) {
         var reviewId = serverRequest.pathVariable("id");
         return repository.findById(reviewId)
+                .switchIfEmpty(Mono.error(new ReviewNotFoundException("review not found " + reviewId)))
                 .flatMap(savedReview -> serverRequest.bodyToMono(Review.class)
                         .map(reqReview -> {
                             savedReview.setRating(reqReview.getRating());
