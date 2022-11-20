@@ -3,4 +3,7 @@ spring:
     mongodb:
       host: localhost
       port: 27017
-      database: local
+      authentication-database: admin
+      username: root
+      password: MongoDB2019!
+      database: movies-info-service
